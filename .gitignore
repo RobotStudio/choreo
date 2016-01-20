@@ -40,7 +40,9 @@ node_modules
 
 # Randoms
 *.orig
+*.old
 *.bak
 tmp
 .tmp
+*.tmp
 
