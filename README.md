@@ -77,28 +77,37 @@ _More coming soon..._
 The _stack_, as it stands.
 
 ```
-    +======================+
-    |  Cloud Integrations  |
-    +----------------------+
-    |     Auth ([Consul](https://github.com/hashicorp/consul))    |
-    +----------------------+
-    |    Config ([Consul](https://github.com/hashicorp/consul))   |
-    +----------------------+
-    |    Events ([Serf](https://www.serf.io/))     |
-    +----------------------+
-    | Membership ([SWIM](https://www.cs.cornell.edu/~asdas/research/dsn02-swim.pdf))    |
-    +----------------------+
-    |  Discovery ([Gossip](https://en.wikipedia.org/wiki/Gossip_protocol))  |
-    +----------------------+
-    |  Physical ([Imagen](https://github.com/robotStudio/imagen))   |
-    +======================+
+    +================+
+    |     Cloud      |
+    |  Integrations  |
+    +----------------+
+    |     Auth       |
+    +----------------+
+    |    Config      |
+    +----------------+
+    |    Events      |
+    +----------------+
+    |   Membership   |
+    +----------------+
+    |    Discovery   |
+    +----------------+
+    |    Physical    |
+    +================+
 ```
+
+- Cloud Integrations ([tafy.io](https://tafy.io))
+- Auth ([Consul](https://github.com/hashicorp/consul))
+- Config ([Consul](https://github.com/hashicorp/consul))
+- Events ([Serf](https://www.serf.io/))
+- Membership ([SWIM](https://www.cs.cornell.edu/~asdas/research/dsn02-swim.pdf))
+- Discovery ([Gossip](https://en.wikipedia.org/wiki/Gossip_protocol))
+- Physical ([Imagen](https://github.com/robotStudio/imagen))
 
 Each of the layers is built independently, and the architecture intends to be
 modular, allowing for any of these technologies to be swapped to meet the
 needs of the individual.
 
-While this isn't the typical `middlware` model, it aims to achieve similar
+While this isn't the typical `middleware` model, it aims to achieve similar
 design considerations.
 
 
