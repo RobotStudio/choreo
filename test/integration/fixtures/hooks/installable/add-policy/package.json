@@ -1,7 +1,0 @@
-{
-  "name": "choreo-hook-add-policy",
-  "main": "index.js",
-  "choreo": {
-    "isHook": true
-  }
-}

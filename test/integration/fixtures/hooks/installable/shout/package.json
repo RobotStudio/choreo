@@ -1,7 +1,0 @@
-{
-  "name": "choreo-hook-shout",
-  "main": "index.js",
-  "choreo": {
-    "isHook": true
-  }
-}

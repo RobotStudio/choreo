@@ -21,35 +21,44 @@ communicate events, whereby applications within the network can respond and
 effect action on the network.  ([More information below.](#Architecture))
 
 
+## Road Map
+
+We are currently creating several PoC pieces to integrate various systems to
+create a *development stack* for robotics that is comparable to [ROS](http://www.ros.org/core-components/).
+
+* Integration with [`Consul`, `Serf`, `Swim`, and `Gossip` (Hashicorp Protocols)](https://www.hashicorp.com/)
+  for decentralized resource management, configuration, and auth.
+* Integration with [NSQ](https://github.com/nsqio/nsq) for language-agnostic messaging.
+* Communication using MessagePack.
+
+
 # Language
 
-While the framework itself is built in Node.js, the application is built
-with [_convention over configuration_](https://en.wikipedia.org/wiki/Convention_over_configuration) in mind, similar to Rails or Sails.js.
+While the core of the framework is being built in Golang, the application is
+built to be language-agnostic and with [_convention over configuration_](https://en.wikipedia.org/wiki/Convention_over_configuration) in
+mind.
 
-This framework is currently intended to be able to work with any software
-written in `JavaScript` or `C/C++` (using `ffi`, `SWIG`, `emscripten`, or
-similar) allowing integration with most low-level or robotics systems out
-there.  There are also probably a handful of ways to compile your language of
-choice into JavaScript or to create bindings in order to integrate, but the
-goal will be to eventually create several ports of integration wares,
-freeing users of adherance to a single language.  See [Contributing](#Contributing) for ways
-which you can help.
+The core Choreo libraries are being created using the Go programming language.
+
 
 # Getting Started
 
 ## Installation
 
-Install globally to run from anywhere:
+We aren't currently providing binary distribution.  With that, you are welcome
+to download the application using your Golang environment.
 
-    npm install -g choreo
+Make sure you have your Go environment setup, and the `$GOPATH/bin` in your
+`$PATH`.  See the GoLang instructions for your distribution.
 
-Or, install locally, and add `./node_modules/.bin` to your PATH:
-
-    npm install choreo
-    export PATH="$PATH:./node_modules/.bin"
+```bash
+go get github/RobotStudio/choreo
+```
 
 
 ## Creating a project
+
+** NOTE: ** This does not currently work.
 
 A Choreo project can contain several _apps_, each performing a specific
 function:
@@ -60,116 +69,136 @@ This will create a new project in the `projectName` directory.
 
 _More coming soon..._
 
+
 # Architecture
 
-Upon executing `choreo graph` the application launches the application stack
-and a peer server, which begins listening for peers.  When a peer message is
-broadcasted on the configured port, the application will attempt to decrypt it
-using the configured means, and upon success, will attempt a connect with the
-peer server.  Upon launch, a host and port may be specified, allowing for
-a peer network connection to establish across subnets.
+### Overview
 
-Once the connection is established, a `peer-connect` event signal goes out to
-the applications, allowing for them to handle any connections.
+The _stack_, as it stands.
 
-    +----------+  +--------------+   +----------+
-    |          |  |--------------|   |          |
-    |  Launch  <---|choreo graph||   |  Listen  |
-    |   app    |  |--------------| +->   for    |
-    |  stack   |  +--------------+ | |  peers   <---+
-    |          |         |         | |          |   |
-    +----+-----+    +----v-----+   | +-----+----+   |
-         |          |          |   |       |        |
-         |          |  Launch  |   | +-----v-----+  |
-         |          |   peer   +---+ |           |  |
-         |          |  server  |     |  Decrypt  |  |
-         |          |          |     |   peer    |  |
-         |          +----------+     |  message  |  |
-     +---v----+                      |           |  |
-     |        |    +------------+    +-----+-----+  |
-     |  App   |    |            |          |        |
-     |  -to-  |    | Establish  |    +-----v-----+  |
-     |  peer  <----+   peer     <----+ Validate  +--+
-     |  init  |    | connection |    +-----------+
-     |        |    |            | Success        Fail
-     +---+----+    +------------+
-         |
-         |       +----------------+
-         |       |----------------|
-         +-------->   Launched   ||
-                 |----------------|
-                 +----------------+
+```
+    +======================+
+    |  Cloud Integrations  |
+    +----------------------+
+    |     Auth ([Consul](https://github.com/hashicorp/consul))    |
+    +----------------------+
+    |    Config ([Consul](https://github.com/hashicorp/consul))   |
+    +----------------------+
+    |    Events ([Serf](https://www.serf.io/))     |
+    +----------------------+
+    | Membership ([SWIM](https://www.cs.cornell.edu/~asdas/research/dsn02-swim.pdf))    |
+    +----------------------+
+    |  Discovery ([Gossip](https://en.wikipedia.org/wiki/Gossip_protocol))  |
+    +----------------------+
+    |  Physical ([Imagen](https://github.com/robotStudio/imagen))   |
+    +======================+
+```
+
+Each of the layers is built independently, and the architecture intends to be
+modular, allowing for any of these technologies to be swapped to meet the
+needs of the individual.
+
+While this isn't the typical `middlware` model, it aims to achieve similar
+design considerations.
 
 
-Once a connection is established on the peer network, an application (or,
-_microservice_) can begin serving connections to the peer network.  These
-communications may then exist as peer-to-peer communications, passed through
-the middleware stack, or as self-standing applications, only tying into other
-microservices on the peer network as the backend to an external, or
-front-facing service.  The backend can be used to share resources such as
-authentication, data storage, or even access to a load balanced farm of web
-scrapers.
+### Design
 
-All applications on the peer network are assumed to use the same middlewares,
-in order to "speak" the same lingo.
+Consider the following architecture for a given robot:
 
-                                 +--------------------+
-                                 |     Middleware     |
-                                 +--------------------+
-                                 | +----------------+ |
-                                 | |   Encryption   | |
-                                 | +----------------+ |
-                                 | +----------------+ |    Peer
-                             XXXXX | Authentication | |   Network
-                             X   | +----------------+ | <--------->
-                             X   | +----------------+ |
-    +--------------------+   X   | |    Logging     | |
-    |      Services      |   X   | +----------------+ |
-    +--------------------+   X   | +----------------+ |
-    | +----------------+ |   X   | | Comm. Protocol | |
-    | |   Encrypt lib  | |   X   | +----------------+ |
-    | +----------------+ |   X   +--------------------+
-    | +----------------+ XXXXX             |
-    | | Data store lib | |                 | Request
-    | +----------------+ |                 |
-    | +----------------+ |             +---v----+
-    | | Authentication | |             |        |
-    | +----------------+ |             | Rules  |
-    | +----------------+ XXXXX         | Engine |
-    | |  MessagePack   | |   X         |        |
-    | +----------------+ |   X         +---+----+
-    | +----------------+ |   X             |
-    | |  Requests lib  | |   X             | Handlers
-    | +----------------+ |   X             |
-    +--------------------+   X   +---------v---------+
-                             X   | Application Stack |
-                             X   +-------------------+      WEB
-                             X   | +---------------+ |       +
-                             X   | |     Echo      | |       |
-                             X   | +---------------+ |       |
-                             XXXXX +---------------+ |       |
-                                 | |   REST API    <------------->
-                                 | +---------------+ |       |
-                                 | +---------------+ |       |
-                                 | |  Web Scraper  +------------->
-                                 | +---------------+ |       |
-                                 +-------------------+       +
+                        XXX
+                    XXXXX XXX    XXXXXX
+                 XXX        XXXXXX    XXX
+          XXXXXXXX           XX          XXXXXXXXX
+         X                                XX     XX
+         XXX           CLOUD SERVICES             XX
+           XXX                                     X
+             XX          X                         X
+              XXX       XX  XX+X        XXX      XXX
+                XXXXXXXXX XXX |XX      XX XXXXXXXX
+                        XXX   | XXXXXXXX
+                              |     XX
+                              |
+                              |
+                              |
+                              |
+                          +---+--+
+                          |      |
+                          | RPi  | Gateway
+                          |      |
+                          +--+---+
+                             |
+                             |
+                        +----+-----+
+                        | Ethernet |
+             +----------+  Switch  +-----------+
+             |          +----+-----+           |
+             |               |                 |
+             |               |                 |
+         +---+--+         +--+---+         +---+--+
+         |      |         |      |         |      |
+         | RPi  |         | RPi  |         | RPi  |
+         |      |         |      |         |      |
+         +----+-+         +----+-+         +----+-+
+              |                |                |
+              |                |                |
+        +-----+----+     +-----+----+     +-----+----+
+        |          |     |          |     |          |
+        |  Arduino |     |  Arduino |     |  Arduino |
+        |          |     |          |     |          |
+        +----+-----+     +-+-------++     +-+--------+
+             |             |       |        |
+        +----+------+      | +---+ |        |  XXXXXXX
+        |Peripherals|      +---| +-+        | X X     X
+        +-----------+        +---+          +-+ X     XXX
+                                              X X     X
+                            Sensors            XXXXXXX
+                                              Actuators
 
-_Services_, as listed in the diagram, are libraries that allow for a common
-interface from the perspective of the middleware and applications.  These can
-be accessed as global variables and provide access to basic functionality that
-is common to all parts of the application.
+_In this example, the Raspberry Pi's could be any embedded Linux platform, and
+Arduino's could be any embedded controller capable of interfacing with
+Hardware._
+
+In this design, the RPi would be installed with a standard image (Imagen) and
+would autodetect hardware on the Arduino's using standard images that it would
+deploy to the detected device.  Essentially, auto-configuring the physical
+application using a _Plug & Play_ type interface.
+
+The standard Imagen images will come with the Hashicorp suite of tools,
+allowing for discovery and membership between the RPi devices.  To read more
+about the images, visit the [Imagen](https://github.com/robotStudio/imagen)
+GitHub page.
+
+In this setup, Choreo would _choreograph_ the entities, both: software and
+hardware, into a cohesive solution.  With a web interface on the Gateway, and
+the backend configuration deployed across the network using Consul, the robot
+can then automatically assemble and integrate with cloud-based AI solutions
+with minimal input from the user.
+
+
+### Key Features
+
+This is a preliminary list, and not at all the current state of things:
+- Service Authentication + Authorization
+- Network encryption
+- Minimal knowledge required to get fully-capable platform
+- Modular architecture, allowing swappable technologies (ie- [DDS](https://en.wikipedia.org/wiki/Data_Distribution_Service))
+- Ingress protection
+- Cloud integration
+- Language and platform/technology agnostic
+- Highly extensible/configurable
 
 
 # Contributing
 
 In order to contribute, for the time being, please create an issue with what
-you would like to see.  It's still pretty early in this project's initiation, so be patient with us as we try to get the ball rolling.  Pull requests are
-welcome.
+you would like to see.  It's still pretty early in this project's initiation,
+so please be patient with us as we try to get the ball rolling.  Pull requests
+are welcome, but not advised unless you've already reached out to us.
 
 # Contact Us
 
-Please contact us at the email associated with our NPM page [here](https://www.npmjs.com/~robotstudio), [follow
+Please contact me at the email [bobby _AT_ robot.studio](), [follow
 Robot Studio on Twitter](https://twitter.com/sokstherobot), or submit an issue on the GitHub
 project page for the associated project that you would like to speak about.
 
