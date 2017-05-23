@@ -1,7 +1,7 @@
 # Status
 
 This project is in its infancy.  If you would like to know more, please see
-[Contributing](#Contributing) below.
+[Contributing](#contributing) below.
 
 
 # Synopsis
@@ -18,7 +18,7 @@ without centralization.  What this means is that a network of services using
 the Choreo framework self-organize themselves as peers, and establish
 communications across these channels using the [GOSSIP protocol](https://en.wikipedia.org/wiki/Gossip_protocol) to
 communicate events, whereby applications within the network can respond and
-effect action on the network.  ([More information below.](#Architecture))
+effect action on the network.  ([More information below.](#architecture))
 
 
 ## Road Map
