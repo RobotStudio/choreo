@@ -1,7 +1,7 @@
 package msg
 
 import (
-	"fmt"
+	"errors"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,44 +13,44 @@ type Publisher struct {
 	producers map[string]*nsq.Producer
 	topic     string
 
-	stopChan chan bool
-	termChan chan os.Signal
+	Data     chan []byte
+	StopChan chan bool
+	TermChan chan os.Signal
 }
 
-func NewPublisher(tpc string, addrs []string) (*Publisher, error) {
+func NewPublisher(tpc string, addrs *[]string) (*Publisher, error) {
 	cfg := nsq.NewConfig()
-	producers := make(map[string]*nsq.Producer)
-	for _, p := range addrs {
+	prdcrs := make(map[string]*nsq.Producer)
+	for _, p := range *addrs {
 		np, err := nsq.NewProducer(p, cfg)
 		if err != nil {
-			return nil, fmt.Errorf("Could not create NewProducer")
+			return nil, errors.New("Could not create NewProducer")
 		}
-		producers[p] = np
+		prdcrs[p] = np
 	}
 
-	p := &Publisher{producers: producers, topic: tpc, stopChan: make(chan bool), termChan: make(chan os.Signal)}
-	signal.Notify(p.termChan, syscall.SIGINT, syscall.SIGTERM)
+	p := &Publisher{
+		producers: prdcrs,
+		topic:     tpc,
+		StopChan:  make(chan bool),
+		TermChan:  make(chan os.Signal),
+	}
+	signal.Notify(p.TermChan, syscall.SIGINT, syscall.SIGTERM)
 
 	return p, nil
 }
 
 func (p *Publisher) Run(data chan []byte) {
-	go func() {
-		for {
-			select {
-			case d := <-data:
-				go func() {
-					for _, pd := range p.producers {
-						pd.Publish(p.topic, d)
-					}
-				}()
-			case <-p.stopChan:
-				p.Stop()
-			case <-p.termChan:
-				p.Stop()
-			}
+	for {
+		d, ok := <-data
+		if !ok {
+			close(p.StopChan)
+			break
 		}
-	}()
+		for _, pd := range p.producers {
+			pd.Publish(p.topic, d)
+		}
+	}
 }
 
 func (p *Publisher) Stop() {
