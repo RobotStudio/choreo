@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	"github.com/nsqio/go-nsq"
@@ -15,50 +14,40 @@ type Subscriber struct {
 	topic   string
 	channel string
 
-	Data chan []byte
-
+	Data     chan []byte
 	StopChan chan bool
-	termChan chan os.Signal
+	TermChan chan os.Signal
 }
 
-type Handler struct {
-	S *Subscriber
+func (s *Subscriber) HandleMessage(m *nsq.Message) error {
+	s.Data <- m.Body
+	return nil
 }
 
-func (h *Handler) HandleMessage(m *nsq.Message) {
-	h.S.Data <- m.Body
-}
-
-func NewSubscriber(tpc, ch string, addrs []string) (*Subscriber, error) {
+func NewSubscriber(tpc, ch string, addrs *[]string) (*Subscriber, error) {
 	cfg := nsq.NewConfig()
 	nc, err := nsq.NewConsumer(tpc, ch, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("Could not create NewConsumer")
 	}
 
-	s := &Subscriber{C: nc, topic: tpc, channel: ch, StopChan: make(chan bool), termChan: make(chan os.Signal)}
-	signal.Notify(s.termChan, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
+	s := &Subscriber{
+		C:        nc,
+		topic:    tpc,
+		channel:  ch,
+		Data:     make(chan []byte),
+		StopChan: make(chan bool),
+		TermChan: make(chan os.Signal),
+	}
+	signal.Notify(s.TermChan, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
+
+	nc.AddHandler(s)
 
 	return s, nil
-}
-
-func (s *Subscriber) Run() {
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		for {
-			select {
-			case <-s.StopChan:
-				s.Stop()
-			case <-s.termChan:
-				s.Stop()
-			}
-		}
-		wg.Done()
-	}()
 }
 
 func (s *Subscriber) Stop() {
 	s.C.Stop()
 	close(s.Data)
+	return
 }
