@@ -1,4 +1,4 @@
-package transceiver
+package choreo
 
 import (
 	"fmt"

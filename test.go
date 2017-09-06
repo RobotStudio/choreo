@@ -8,7 +8,7 @@ import (
 
   "golang.org/x/net/context"
   "google.golang.org/grpc"
-  "github.com/RobotStudio/choreo-msg/build/go/primitive"
+  //"github.com/RobotStudio/choreo-msg/build/primitive"
   pb "github.com/RobotStudio/choreo-svc/svc"
   "google.golang.org/grpc/reflection"
 )
