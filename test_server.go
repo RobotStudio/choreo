@@ -1,6 +1,6 @@
 package main
 
-//go:generate protoc -I ../choreo-msg/msg -I ../choreo-svc/svc --go_out=plugins=grpc:../choreo-svc/build/go ../choreo-svc/svc/ping.proto
+//go:generate ./regen.sh
 
 import (
   "log"
@@ -18,8 +18,10 @@ const (
   port = ":5001"
 )
 
-func (p* svc.PingServer) Ping(ctx context.Context, b msg.Bool) msg.Bool {
-  return b
+type pinger struct {}
+
+func (p* pinger) Ping(ctx context.Context, b *msg.Bool) (*msg.Bool, error) {
+  return b, nil
 }
 
 func main() {
@@ -29,7 +31,7 @@ func main() {
   }
 
   s := grpc.NewServer()
-  svc.RegisterPingServer(s, &svc.PingServer{})
+  svc.RegisterPingServer(s, &pinger{})
 
   reflection.Register(s)
   if err := s.Serve(lis); err != nil {
