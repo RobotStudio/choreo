@@ -1,0 +1,22 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/RobotStudio/choreo-svc",
+			"repository": "https://github.com/RobotStudio/choreo-svc",
+			"vcs": "git",
+			"revision": "f8ba193ab3e68b44d5be8c790631042706f27479",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/golang/protobuf/proto/testdata",
+			"repository": "https://github.com/golang/protobuf",
+			"vcs": "git",
+			"revision": "17ce1425424ab154092bbb43af630bd647f3bb0d",
+			"branch": "master",
+			"path": "/proto/testdata",
+			"notests": true
+		}
+	]
+}
