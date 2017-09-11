@@ -14,7 +14,7 @@ package svc
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import choreo "github.com/RobotStudio/choreo-msg/msg"
+import choreo "github.com/RobotStudio/choreo-msg/msg/primitive"
 
 import (
 	context "golang.org/x/net/context"
