@@ -9,7 +9,8 @@ import (
   "golang.org/x/net/context"
   "google.golang.org/grpc"
   //"github.com/RobotStudio/choreo-msg/build/primitive"
-  pb "github.com/RobotStudio/choreo-svc/svc"
+  "github.com/RobotStudio/choreo-svc/svc"
+  "github.com/RobotStudio/choreo-msg/msg"
   "google.golang.org/grpc/reflection"
 )
 
@@ -17,9 +18,7 @@ const (
   port = ":5001"
 )
 
-type Pinger struct {}
-
-func (p* Pinger) Ping(ctx context.Context, b Bool) Bool {
+func (p* svc.PingServer) Ping(ctx context.Context, b msg.Bool) msg.Bool {
   return b
 }
 
@@ -30,7 +29,7 @@ func main() {
   }
 
   s := grpc.NewServer()
-  pb.RegisterGreeterServer(s, &server{})
+  svc.RegisterPingServer(s, &svc.PingServer{})
 
   reflection.Register(s)
   if err := s.Serve(lis); err != nil {

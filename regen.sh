@@ -9,7 +9,7 @@
 
 set -e
 
-PKG=github.com/RobotStudio/choreo/msg
+PKG=github.com/RobotStudio/choreo
 PROTO_REPO=https://github.com/RobotStudio/choreo-msg
 SVC_REPO=https://github.com/RobotStudio/choreo-svc
 
@@ -23,9 +23,7 @@ for tool in go git protoc protoc-gen-go; do
 done
 
 root=$(go list -f '{{.Root}}' $PKG/... | head -n1)
-if [ -z "$root" ]; then
-  error "cannot find root of $PKG"
-fi
+[ -z "$root" ] && error "cannot find root of $PKG"
 
 remove_dirs=
 trap 'rm -rf $remove_dirs' EXIT
@@ -51,9 +49,9 @@ fi
 wait
 
 # Nuke everything, we'll generate them back
-rm -rf choreo-{svc,msg}
+rm -rf vendor/${PKG}-{svc,msg}
 
-go run regen.go -go_out "$root/src" -pkg_prefix "$PKG" "$apidir" "$protodir"
+go run regen.go -go_out "$root/src/$PKG/vendor" -pkg_prefix "$PKG" "$apidir" "$protodir"
 
 # Sanity check the build.
 warn "Checking that the libraries build..."
