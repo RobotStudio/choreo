@@ -1,6 +1,6 @@
 package main
 
-//go:generate ./regen.sh
+//go:generate ../../regen.sh
 
 import (
   "log"
@@ -8,11 +8,12 @@ import (
   "golang.org/x/net/context"
   "google.golang.org/grpc"
   "github.com/RobotStudio/choreo-svc/svc"
+  msg "github.com/RobotStudio/choreo-msg/msg/primitive"
 )
 
 const (
   address = "localhost:5001"
-  defaultValue = true
+  defaultValue = false
 )
 
 func main() {
@@ -24,9 +25,14 @@ func main() {
   c := svc.NewPingClient(conn)
   val := defaultValue
 
-  r, err := c.Ping(context.Background(), &svc.PingClient{data: val})
+  r, err := c.Ping(context.Background(), &msg.Bool{Data: val})
   if err != nil {
     log.Fatalf("could not ping: %v", err)
   }
-  log.Println(r)
+
+  if r.Data {
+    log.Println("True")
+  } else {
+    log.Println("False")
+  }
 }

@@ -1,6 +1,6 @@
 package main
 
-//go:generate ./regen.sh
+//go:generate ../../regen.sh
 
 import (
   "log"
@@ -10,7 +10,7 @@ import (
   "google.golang.org/grpc"
   //"github.com/RobotStudio/choreo-msg/build/primitive"
   "github.com/RobotStudio/choreo-svc/svc"
-  "github.com/RobotStudio/choreo-msg/msg"
+  msg "github.com/RobotStudio/choreo-msg/msg/primitive"
   "google.golang.org/grpc/reflection"
 )
 
